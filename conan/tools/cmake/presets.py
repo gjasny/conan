@@ -30,6 +30,10 @@ def _build_preset_name(conanfile):
     return build_type.lower() if build_type else "default"
 
 
+def _test_preset(conanfile, multiconfig):
+    return _build_preset(conanfile, multiconfig)
+
+
 def _configure_preset_name(conanfile, multiconfig):
     build_type = conanfile.settings.get_safe("build_type")
     custom_conf = get_build_folder_custom_vars(conanfile)
@@ -137,6 +141,7 @@ def _contents(conanfile, toolchain_file, cache_variables, generator):
           }
     multiconfig = is_multi_configuration(generator)
     ret["buildPresets"].append(_build_preset(conanfile, multiconfig))
+    ret["testPresets"].append(_test_preset(conanfile, multiconfig))
     _conf = _configure_preset(conanfile, generator, cache_variables, toolchain_file, multiconfig)
     ret["configurePresets"].append(_conf)
     return ret
@@ -173,6 +178,13 @@ def write_cmake_presets(conanfile, toolchain_file, generator, cache_variables,
             data["buildPresets"][position] = build_preset
         else:
             data["buildPresets"].append(build_preset)
+
+        test_preset = _test_preset(conanfile, multiconfig)
+        position = _get_already_existing_preset_index(build_preset["name"], data["testPresets"])
+        if position is not None:
+            data["testPresets"][position] = test_preset
+        else:
+            data["testPresets"].append(test_preset)
 
         configure_preset = _configure_preset(conanfile, generator, cache_variables, toolchain_file,
                                              multiconfig)
